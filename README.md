@@ -24,6 +24,7 @@ Convert data from Pokemon-api into MySQL.
 | weight          | SMALLINT  | no          |                |            |                      |       |
 
 ##### pokemon_abilities
+
 | COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
 |-------------|-----------|-------------|----------------|------------|----------------------|-------|
 | id          | SMALLINT  | no          |                | multiple   | pokemon              |       |
@@ -111,11 +112,13 @@ TODO
 |-------------|-----------|-------------|----------------|------------|----------------------|----------------|
 | id          | SMALLINT  | no          |                | primary    |                      | AUTO_INCREMENT |
 | name        | CHAR(60)  | no          |                |            |                      |                |
+| power       | SMALLINT  | no          |                |            |                      |                |
 | accuracy    | SMALLINT  | no          |                |            |                      |                |
 | pp          | SMALLINT  | no          |                |            |                      |                |
 | priority    | SMALLINT  | no          |                |            |                      |                |
-| power       | SMALLINT  | no          |                |            |                      |                |
 | generation  | CHAR(60)  | no          |                |            |                      |                |
+| category    | CHAR(60)  | no          |                |            |                      |                |
+| type        | CHAR(60)  | no          |                |            |                      |                |
 
 ##### move_damage_class
 
@@ -132,6 +135,14 @@ TODO
 | language_code | CHAR(60)  | no          |                |            |                      |       |
 | effect        | TEXT      | no          |                |            |                      |       |
 | short_effect  | TINYTEXT  | yes         |                |            |                      |       |
+
+##### move_names
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | move                 |       |
+| language_code | CHAR(60)  |             |                |            |                      |       |
+| name          | CHAR(60)  | no          |                |            |                      |       |
 
 #### Ability
 
