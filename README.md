@@ -22,6 +22,7 @@ Convert data from Pokemon-api into MySQL.
 | base_experience | SMALLINT  | no          |                |            |                      |       |
 | height          | SMALLINT  | no          |                |            |                      |       |
 | weight          | SMALLINT  | no          |                |            |                      |       |
+| type_id         | SMALLINT  | no          |                |            | type                 |       |
 
 ##### pokemon_abilities
 
@@ -96,14 +97,6 @@ TODO
 | base_start  | SMALLINT  | no          |                |            |                      |       |
 | effort      | SMALLINT  | no          |                |            |                      |       |
 
-##### pokemon_type
-
-| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
-|-------------|-----------|-------------|----------------|------------|----------------------|-------|
-| id          | SMALLINT  | no          |                | primary    | pokemon              |       |
-| type_id     | SMALLINT  | no          |                |            | type                 |       |
-
-
 #### Move
 
 ##### move
@@ -118,14 +111,14 @@ TODO
 | priority    | SMALLINT  | no          |                |            |                      |                |
 | generation  | CHAR(60)  | no          |                |            |                      |                |
 | category    | CHAR(60)  | no          |                |            |                      |                |
-| type        | CHAR(60)  | no          |                |            |                      |                |
+| type_id     | SHORTINT  | no          |                |            | type                 |                |
 
 ##### move_damage_class
 
 | COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
 |-------------|-----------|-------------|----------------|------------|----------------------|-------|
 | id          | SMALLINT  | no          |                | primary    | move                 |       |
-| class       | CHAR(60)  | no          |                |            |                      |       |
+| class_name  | CHAR(60)  | no          |                |            | move_damage_class    |       |
 
 ##### move_effects
 
@@ -143,6 +136,31 @@ TODO
 | id            | SMALLINT  | no          |                | multiple   | move                 |       |
 | language_code | CHAR(60)  |             |                |            |                      |       |
 | name          | CHAR(60)  | no          |                |            |                      |       |
+
+#### Move Damage Class
+
+##### move_damage_class
+	
+| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|-------------|-----------|-------------|----------------|------------|----------------------|-------|
+| class_name  | CHAR(60)  | no          |                | primary    |                      |       |
+| description | TEXT      | no          |                |            |                      |       |
+
+##### move_damage_class_names
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| class_name    | CHAR(60)  | no          |                | multiple   | move_damage_class    |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| name          | CHAR(60)  | no          |                |            |                      |       |
+
+##### move_damage_class_descriptions
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| class_name    | CHAR(60)  | no          |                | multiple   | move_damage_class    |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| description   | TEXT      | no          |                |            |                      |       |
 
 #### Ability
 
@@ -182,13 +200,14 @@ TODO
 
 #### Type
 
-1. **type**
+##### type
 | COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra          |
 |-------------|-----------|-------------|----------------|------------|----------------------|----------------|
 | id          | SMALLINT  | no          |                | primary    |                      | AUTO_INCREMENT |
 | name        | CHAR(60)  | no          |                |            |                      |                |
+| generation  | CHAR(60)  | no          |                |            |                      |                |
 
-2. **type_relation**
+##### type_relation
 **NOTE**: 'normal' damage is omitted by default when getting data from `pokeapi`
 | COLUMN_NAME | DATA_TYPE                              | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
 |-------------|----------------------------------------|-------------|----------------|------------|----------------------|-------|
@@ -196,25 +215,72 @@ TODO
 | to_id       | SMALLINT                               | no          |                | primary    | type                 |       |
 | damage      | ENUM('no', 'half', 'normal', 'double') | no          |                |            |                      |       |
 
-3. **type_generation**
-| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
-|-------------|-----------|-------------|----------------|------------|----------------------|-------|
-| id          | SMALLINT  | no          |                | primary    | type                 |       |
-| generation  | CHAR(60)  | no          |                |            |                      |       |
+##### type_move_damage_class
 
-4. **type_move_damage_class**
-TODO 
-| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
-|-------------|-----------|-------------|----------------|------------|----------------------|-------|
-| id          | SMALLINT  | no          |                | primary    | type                 |       |
-|             | CHAR(60)  | no          |                |            |                      |       |
+| COLUMN_NAME       | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|-------------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id                | SMALLINT  | no          |                | primary    | type                 |       |
+| class_name        | CHAR(60)  | no          |                |            | move_damage_class    |       |
+
+##### type_names
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | type                 |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| name          | CHAR(60)  | no          |                |            |                      |       |
 
 #### Item
 
-| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra          |
-|-------------|-----------|-------------|----------------|------------|----------------------|----------------|
-| id          | SMALLINT  | no          |                | primary    | type                 | AUTO_INCREMENT |
-| name        | CHAR(60)  | no          |                |            |                      |                |
+##### item
+
+| COLUMN_NAME    | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra          |
+|----------------|-----------|-------------|----------------|------------|----------------------|----------------|
+| id             | SMALLINT  | no          |                | primary    |                      | AUTO_INCREMENT |
+| name           | CHAR(60)  | no          |                |            |                      |                |
+| cost           | INT       | no          |                |            |                      |                |
+| category       | CHAR(60)  | no          |                |            |                      |                |
+| default_sprite | CHAR(255) | yes         |                |            |                      |                |
+
+##### item_fling
+
+| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|-------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id          | SMALLINT  | no          |                | primary    | item                 |       |
+| fling_power | SMALLINT  | no          |                |            |                      |       |
+
+##### item_effects
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | type                 |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| effect        | TEXT      | no          |                |            |                      |       |
+| short_effect  | TINYTEXT  | yes         |                |            |                      |       |
+
+##### item_flavor_text
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | type                 |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| version_group | CHAR(60)  | no          |                |            |                      |       |
+| text          | TEXT      | no          |                |            |                      |       |
+
+##### item_game_indices
+
+| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|-------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id          | SMALLINT  | no          |                | multiple   | item                 |       |
+| game_id     | SMALLINT  | no          |                |            | game                 |       |
+
+##### item_names
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | item                 |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| name          | CHAR(60)  | no          |                |            |                      |       |
 	
 #### Location
 
@@ -225,10 +291,10 @@ TODO
 | id          | SMALLINT  | no          |                | primary    | type                 | AUTO_INCREMENT |
 | name        | CHAR(60)  | no          |                |            |                      |                |
 
-
 ### Advanced Table
 The query result.
 
+#### Item -> Pokemon Owners
 
 
 ## Related Resources
