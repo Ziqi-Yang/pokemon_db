@@ -146,17 +146,39 @@ TODO
 
 #### Ability
 
-1. **ability**
+##### ability
+
 | COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra          |
 |-------------|-----------|-------------|----------------|------------|----------------------|----------------|
 | id          | SMALLINT  | no          |                | primary    |                      | AUTO_INCREMENT |
 | name        | CHAR(60)  | no          |                |            |                      |                |
-
-2. **ability_generation**
-| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
-|-------------|-----------|-------------|----------------|------------|----------------------|-------|
-| id          | SMALLINT  | no          |                | primary    | ability              |       |
 | generation  | CHAR(60)  | no          |                |            |                      |       |
+
+##### ability_names
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | ability              |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| name          | CHAR(60)  | no          |                |            |                      |       |
+
+##### ability_effects
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | ability              |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| effect        | TEXT      | no          |                |            |                      |       |
+| short_effect  | TINYTEXT  | yes         |                |            |                      |       |
+
+##### ability_flavor_text
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | ability              |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| text          | TEXT      | no          |                |            |                      |       |
+| version_group | CHAR(60)  | no          |                |            |                      |       |
 
 #### Type
 
