@@ -4,6 +4,7 @@ from json import loads as json
 from urllib.parse import urljoin
 import requests
 import threading
+import db
 
 API_BASE = "https://pokeapi.co/api/v2/"
 ALL_POKEMONS_LIST_URL = urljoin(API_BASE, "pokemon?limit={limit}&offset=0")
@@ -28,3 +29,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    cursor = db.create_db()
