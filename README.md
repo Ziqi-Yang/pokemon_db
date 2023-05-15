@@ -7,27 +7,21 @@ Convert data from Pokemon-api into MySQL.
 ## Database Design
 
 **db_name**: `pokemondb`   
-**categories**: `pokemon`, `moves`, `ability`, `type`, `item`, `location`, `game`  
 
 ### Base Tables
 
 #### Pokemon
 
 ##### pokemon
-| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
-|-------------|-----------|-------------|----------------|------------|----------------------|-------|
-| id          | SMALLINT  | no          |                | primary    |                      |       |
-| name        | CHAR(60)  | no          |                |            |                      |       |
-
-##### pokemon_base_information
 
 | COLUMN_NAME     | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
 |-----------------|-----------|-------------|----------------|------------|----------------------|-------|
-| id              | SMALLINT  | no          |                | multiple   | pokemon              |       |
+| id              | SMALLINT  | no          |                | primary    |                      |       |
+| name            | CHAR(60)  | no          |                |            |                      |       |
+| order           | SMALLINT  | no          |                |            |                      |       |
 | base_experience | SMALLINT  | no          |                |            |                      |       |
 | height          | SMALLINT  | no          |                |            |                      |       |
 | weight          | SMALLINT  | no          |                |            |                      |       |
-| order           | SMALLINT  | no          |                |            |                      |       |
 
 ##### pokemon_abilities
 | COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
@@ -99,21 +93,45 @@ TODO
 | id          | SMALLINT  | no          |                | multiple   | pokemon              |       |
 | stat_name   | CHAR(60)  | no          |                |            |                      |       |
 | base_start  | SMALLINT  | no          |                |            |                      |       |
-| effort      | SMALLINT  | no            |                |            |                      |       |
+| effort      | SMALLINT  | no          |                |            |                      |       |
 
 ##### pokemon_type
+
 | COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
 |-------------|-----------|-------------|----------------|------------|----------------------|-------|
 | id          | SMALLINT  | no          |                | primary    | pokemon              |       |
 | type_id     | SMALLINT  | no          |                |            | type                 |       |
 
 
-
 #### Move
 
-1. **Move**
+##### move
 
+| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra          |
+|-------------|-----------|-------------|----------------|------------|----------------------|----------------|
+| id          | SMALLINT  | no          |                | primary    |                      | AUTO_INCREMENT |
+| name        | CHAR(60)  | no          |                |            |                      |                |
+| accuracy    | SMALLINT  | no          |                |            |                      |                |
+| pp          | SMALLINT  | no          |                |            |                      |                |
+| priority    | SMALLINT  | no          |                |            |                      |                |
+| power       | SMALLINT  | no          |                |            |                      |                |
+| generation  | CHAR(60)  | no          |                |            |                      |                |
 
+##### move_damage_class
+
+| COLUMN_NAME | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|-------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id          | SMALLINT  | no          |                | primary    | move                 |       |
+| class       | CHAR(60)  | no          |                |            |                      |       |
+
+##### move_effects
+
+| COLUMN_NAME   | DATA_TYPE | IS_NULLABLE | COLUMN_DEFAULT | COLUMN_KEY | foreign_key_to_table | extra |
+|---------------|-----------|-------------|----------------|------------|----------------------|-------|
+| id            | SMALLINT  | no          |                | multiple   | move                 |       |
+| language_code | CHAR(60)  | no          |                |            |                      |       |
+| effect        | TEXT      | no          |                |            |                      |       |
+| short_effect  | TINYTEXT  | yes         |                |            |                      |       |
 
 #### Ability
 
