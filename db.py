@@ -43,64 +43,39 @@ def create_table(cursor: MySQLCursor, table_name: str,
                  data_types: list[str],
                  data_nullable: list[bool],
                  data_default: list, # can also be None
-                 foreign_key_target_names: list[str | None], # None means it is not a foreign key
-                 key_names: list[str], # custom length
-                 key_types: list[str], # PRI, MUL
-                 extra: list[str | None]):
+                 pri_keys: list[str], # NOTE: list of columns that are set as primary keys
+                 reference: list[str | None] # None means it is not a foreign key
+                 ):
 
     def format_columns(column_names: list[str],
                        data_types: list[str],
                        data_nullable: list[bool],
-                       data_default: list,
-                       extra: list[str | None]):
+                       data_default: list):
         format_nullable = lambda x: " NOT NULL" if not x else ""
         format_default = lambda x: f" {x}" if x is not None else ""
-        format_extra_info = lambda x: f" {x}" if x is not None else ""
         return ",\n".join(
-            [f"{name} {type}{format_nullable(isNull)}{format_default(default_value)}{format_extra_info(e)}"
-             for name, type, isNull, default_value, e in
-             zip(column_names, data_types, data_nullable, data_default, extra)]) + ","
+            [f"{name} {type}{format_nullable(isNull)}{format_default(default_value)}"
+             for name, type, isNull, default_value in
+             zip(column_names, data_types, data_nullable, data_default)]) + ","
 
-    def format_keys(key_names: list[str], key_types: list[str]):
-        pri_keys = []
-        mul_keys = []
-        for index, key in enumerate(key_names):
-            match key_types[index]:
-                case "pri" | "PRI":
-                    pri_keys.append(key)
-                case "mul" | "MUL":
-                    mul_keys.append(key)
-                case _:
-                    raise IllegalArgumentError("Unknown type in parameter 'key_types'")
-        res = ""
-        if len(pri_keys) != 0:
-            res += "PRIMARY KEY({})".format(",".join(pri_keys))
-        if len(mul_keys) != 0:
-            if len(res) != 0:
-                res += ",\n"
-                res += "KEY({})".format(",".join(mul_keys))
-        return res
-
-    if not (len(column_names) == len(data_types) == len(data_nullable) == len(data_default) == len(foreign_key_target_names)
-            == len(extra)):
-        raise IllegalArgumentError("List type arguments length Error!")
-
-    if len(key_names) != len(key_types):
+    if not (len(column_names) == len(data_types) == len(data_nullable) == len(data_default) == len(reference)):
         raise IllegalArgumentError("List type arguments length Error!")
 
     formated_foreign_keys = ",\n".join(
         [f"FOREIGN KEY ({name}) REFERENCES {target}" for name, target
-         in zip(column_names, foreign_key_target_names) if target is not None ]) + ","
+         in zip(column_names, reference) if target is not None ]) + ","
 
-    return f"""CREATE TABLE {table_name}(
-{format_columns(column_names, data_types, data_nullable, data_default, extra)}
+    formated_primary_keys = "PRIMARY KEY ({})".format(",".join(pri_keys))
+
+    command = f"""CREATE TABLE {table_name}(
+{format_columns(column_names, data_types, data_nullable, data_default)}
 {formated_foreign_keys}
-{format_keys(key_names, key_types)}
+{formated_primary_keys}
 );"""
-#     # TODO 
-#     cursor.execute(f"""CREATE TABLE {table_name}(
-#     {format_columns(column_names, data_types)}
-# )""")
+    cursor.execute(command);
+
+def create_base_tables():
+    pass
 
 if __name__ == "__main__":
     # create db
@@ -113,10 +88,8 @@ if __name__ == "__main__":
         ["INT", "CHAR(60)"],
         [False, True],
         [None, None],
-        ["pokemon", None],
         ["id", "name"],
-        ["PRI", "mul"],
-        ["AUTO_INCREMENT", None]
+        ["pokemon(id)", None],
     )
     print(res)
 
