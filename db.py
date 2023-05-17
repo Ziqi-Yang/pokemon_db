@@ -88,6 +88,8 @@ def create_basic_tables(cn: Conn):
     """Create a couple of tables that will be refered in the other tables."""
     cursor = cn.cursor
 
+    # pokemon
+    info("[*] creating table 'pokemon'...")
     create_table(
         cursor, "pokemon",
         ["id", "name", "the_order", "height", "weight", "base_experience", "sprite_front_default", 
@@ -97,17 +99,17 @@ def create_basic_tables(cn: Conn):
          "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)"],
         [False, False, False, False, False, False, True, True, True, True, True, True, True, True],
         None, ["id"], None)
-    info("[*] create table 'pokemon'")
 
     # stat
+    info("[*] creating table 'stat'...")
     create_table(
         cursor, "stat",
         ["id", "name", "is_battle_only"],
         ["SMALLINT", "CHAR(60)", "BOOLEAN"],
         False, None, ["id"], None)
-    info("[*] create table 'stat'")
 
     # species
+    info("[*] creating table 'species'...")
     create_table(
         cursor, "species",
         ["id", "name", "the_order", "gender_rate", "capture_rate", "base_happiness", "is_baby", 
@@ -116,98 +118,98 @@ def create_basic_tables(cn: Conn):
         ["SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "BOOLEAN", "BOOLEAN",
          "BOOLEAN", "MEDIUMINT", "BOOLEAN", "BOOLEAN", "ENUM('slow', 'medium', 'fast', 'medium-slow', 'slow-then-very-fast', 'fast-then-very-slow')", "CHAR(60)"],
         False, None, ["id"], None)
-    info("[*] create table 'species'")
 
     # egg_group
+    info("[*] creating table 'egg_group'...")
     create_table(
         cursor, "egg_group",
         ["id", "name"],
         ["SMALLINT", "CHAR(60)"],
         False, None, ["id"], None)
-    info("[*] create table 'egg_group'")
 
     # move_damage_class 
+    info("[*] creating table 'move_damage_class'...")
     create_table(
         cursor, "move_damage_class",
         ["id", "class_name", "description"],
         ["SMALLINT", "CHAR(60)", "SMALLINT"],
         False, None, ["id"], None)
-    info("[*] create table 'move_damage_class'")
     
     # ability
+    info("[*] creating table 'ability'...")
     create_table(
         cursor, "ability",
         ["id", "name", "generation"],
         ["SMALLINT", "CHAR(60)", "CHAR(60)"],
         False, None, ["id"], None)
-    info("[*] create table 'ability'")
 
     # type NOTE: after creating move_damage_class
+    info("[*] creating table 'type'...")
     create_table(
         cursor, "type",
         ["id", "name", "generation", "move_damage_class_id"],
         ["SMALLINT", "CHAR(60)", "CHAR(60)", "SMALLINT"],
         False, None, ["id"], {"move_damage_class_id": "move_damage_class(id)"})
-    info("[*] create table 'type'")
 
     # move NOTE: after creating type
+    info("[*] creating table 'move'...")
     create_table(
         cursor, "move",
         ["id", "name", "power", "accuracy", "pp", "priority", "generation", "category", "type_id"],
         ["SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "CHAR(60)", "CHAR(60)", "SMALLINT"],
         False, None, ["id"], {"type_id": "type(id)"})
-    info("[*] create table 'move'")
 
     # item
+    info("[*] creating table 'item'...")
     create_table(
         cursor, "item",
         ["id", "name", "cost", "category", "default_sprite", "fling_power"],
         ["SMALLINT", "CHAR(60)", "INT", "CHAR(60)", "CHAR(255)", "SMALLINT"],
         [False, False, False, False, True, False],
         None,  ["id"], None)
-    info("[*] create table 'item'")
 
     # table 'region'
+    info("[*] creating table 'region'...")
     create_table(
         cursor, "region",
         ["id", "name"],  
         ["SMALLINT", "CHAR(60)"],
         False, None, ["id"], None)
-    info("[*] create table 'region'")
 
     # location
+    info("[*] creating table 'location'...")
     create_table(
         cursor, "location",
         ["id", "name", "region_id"],
         ["SMALLINT", "CHAR(60)", "SMALLINT"],
         False, None, ["id"], {"region_id": "region(id)"})
-    info("[*] create table 'location'")
 
     # area
+    info("[*] creating table 'area'...")
     create_table(
         cursor, "area",
         ["id", "name", "location_id"],
         ["SMALLINT", "CHAR(60)", "SMALLINT"],
         False, None, ["id"], {"location_id": "location(id)"})
-    info("[*] create table 'area'")
 
     # game_group
+    info("[*] creating table 'game_group'...")
     create_table(
         cursor, "game_group",
         ["id", "name", "generation"],
         ["SMALLINT", "CHAR(60)", "CHAR(60)"],
         False, None, ["id"], None)
-    info("[*] create table 'game_group'")
 
     # game
+    info("[*] creating table 'game'...")
     create_table(
         cursor, "game",
         ["id", "name", "game_group_id"],
         ["SMALLINT", "CHAR(60)", "SMALLINT"],
         False, None, ["id"], None)
-    info("[*] create table 'game'")
 
     # encounter NOTE: after creating pokemon, area and game tables
+    info("[*] creating table 'encounter'...")
     create_table(
         cursor, "encounter",
         ["id", "area_id", "pokemon_id", "game_id", "max_chance"],
@@ -215,29 +217,195 @@ def create_basic_tables(cn: Conn):
         False, None,
         ["id", "area_id", "pokemon_id", "game_id"],
         {"area_id": "area(id)", "pokemon_id": "pokemon(id)", "game_id": "game(id)"})
-    info("[*] create table 'encounter'")
 
     # encounter_method
+    info("[*] creating table 'encounter_method'...")
     create_table(
         cursor, "encounter_method",
         ["id", "name", "the_order"],
         ["SMALLINT", "CHAR(60)", "SMALLINT"],
         False, None, ["id"], None)
-    info("[*] create table 'encounter_method'")
 
     # encounter_condition
+    info("[*] creating table 'encounter_condition'...")
     create_table(
         cursor, "encounter_condition",
         ["id", "name"],
         ["SMALLINT", "CHAR(60)"],
         False, None, ["id"], None)
-    info("[*] create table 'encounter_condition'")
 
+def create_other_tables(cn: Conn):
+    create_other_tables_pokemon(cn)
+    create_other_tables_stat(cn)
+    create_other_tables_species(cn)
+    create_other_tables_egg_group(cn)
+    create_other_tables_move(cn)
+    create_other_tables_move_damage_class(cn)
+    create_other_tables_ability(cn)
+    create_other_tables_type(cn)
+    create_other_tables_item(cn)
+    create_other_tables_location(cn)
+    create_other_tables_encounter(cn)
+    create_other_tables_game(cn)
+
+
+def create_other_tables_pokemon(cn: Conn):
+    """Create other tables."""
+    cursor = cn.cursor
+
+    # pokemon_types
+    info("[*] creating table 'pokemon_types'...")
+    create_table(
+        cursor, "pokemon_types",
+        ["pokemon_id", "type_id"],
+        ["SMALLINT", "SMALLINT"],
+        False, None, ["pokemon_id", "type_id"], {"pokemon_id": "pokemon(id)", "type_id": "type(id)"})
+
+    # pokemon_abilities
+    info("[*] creating table 'pokemon_abilities'...")
+    create_table(
+        cursor, "pokemon_abilities",
+        ["pokemon_id", "ability_id", "is_hidden"],
+        ["SMALLINT", "SMALLINT", "BOOLEAN"],
+        False, None, ["pokemon_id", "ability_id"], {"pokemon_id": "pokemon(id)", "ability_id": "ability(id)"})
+
+    # pokemon_forms
+    info("[*] creating table 'pokemon_forms'...")
+    create_table(
+        cursor, "pokemon_forms",
+        ["pokemon_id", "name"],
+        ["SMALLINT", "CHAR(60)"],
+        False, None, ["pokemon_id", "name"], None)
+    
+    # pokemon_game_indices
+    info("[*] creating table 'pokemon_game_indices'...")
+    create_table(
+        cursor, "pokemon_game_indices",
+        ["pokemon_id", "game_id"],
+        ["SMALLINT", "SMALLINT"],
+        False, None, ["pokemon_id", "game_id"], {"pokemon_id": "pokemon(id)", "game_id": "game(id)"})
+    
+    # pokemon_held_items
+    info("[*] creating table 'pokemon_held_items'...")
+    create_table(
+        cursor, "pokemon_held_items",
+        ["pokemon_id", "item_id"],
+        ["SMALLINT", "SMALLINT"],
+        False, None, ["pokemon_id", "item_id"], {"pokemon_id": "pokemon(id)", "item_id": "item(id)"})
+    
+    # pokemon_moves
+    info("[*] creating table 'pokemon_moves'...")
+    create_table(
+        cursor, "pokemon_moves",
+        ["pokemon_id", "move_id", "game_group_id", "level_learned_at", "move_learn_method"],
+        ["SMALLINT", "SMALLINT", "SMALLINT", "TINYINT", "CHAR(60)"],
+        False, None, ["pokemon_id", "move_id", "game_group_id"],
+        {"pokemon_id": "pokemon(id)", "move_id": "move(id)", "game_group_id": "game_group(id)"})
+    
+    # pokemon_stats
+    info("[*] creating table 'pokemon_stats'...")
+    create_table(
+        cursor, "pokemon_stats",
+        ["pokemon_id", "stat_id", "base_start", "effort"],
+        ["SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT"],
+        False, None, ["pokemon_id", "stat_id"], {"pokemon_id": "pokemon(id)", "stat_id": "stat(id)"})
+
+def create_other_tables_stat(cn: Conn):
+    cursor = cn.cursor
+
+    # stat_names
+    info("[*] creating table 'stat_names'...")
+    create_table(
+        cursor, "stat_names",
+        ["stat_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["stat_id", "language_code"], {"stat_id": "stat(id)"})
+
+def create_other_tables_species(cn: Conn):
+    cursor = cn.cursor
+
+    # species_egg_group
+    info("[*] creating table 'species_egg_group'...")
+    create_table(
+        cursor, "species_egg_group",
+        ["species_id", "egg_group_id"],
+        ["SMALLINT", "SMALLINT"],
+        False, None, ["species_id", "egg_group_id"], {"species_id": "species(id)", "egg_group_id": "egg_group(id)"})
+    
+    # species_names
+    info("[*] creating table 'species_names'...")
+    create_table(
+        cursor, "species_names",
+        ["species_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["species_id", "language_code"], {"species_id": "species(id)"})
+    
+    # species_flavor_text
+    info("[*] creating table 'species_flavor_text'...")
+    create_table(
+        cursor, "species_flavor_text",
+        ["species_id", "language_code", "text", "game_group_id"],
+        ["SMALLINT", "CHAR(60)", "TEXT", "SMALLINT"],
+        False, None, ["species_id", "language_code"], {"species_id": "species(id)", "game_group_id": "game_group(id)"})
+    
+    # species_form_descriptions
+    info("[*] creating table 'species_form_descriptions'...")
+    create_table(
+        cursor, "species_form_descriptions",
+        ["species_id", "language_code", "description"],
+        ["SMALLINT", "CHAR(60)", "TEXT"],
+        False, None, ["species_id", "language_code"], {"species_id": "species(id)"})
+
+def create_other_tables_egg_group(cn: Conn):
+    cursor = cn.cursor
+
+    # egg_group_names
+    info("[*] creating table 'egg_group_names'...")
+    create_table(
+        cursor, "egg_group_names",
+        ["egg_group_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["id"], None)
+
+def create_other_tables_move(cn: Conn):
+    cursor = cn.cursor
+    pass
+
+def create_other_tables_move_damage_class(cn: Conn):
+    cursor = cn.cursor
+    pass
+
+def create_other_tables_ability(cn: Conn):
+    cursor = cn.cursor
+    pass
+
+def create_other_tables_type(cn: Conn):
+    cursor = cn.cursor
+    pass
+
+def create_other_tables_item(cn: Conn):
+    cursor = cn.cursor
+    pass
+
+def create_other_tables_location(cn: Conn):
+    cursor = cn.cursor
+    pass
+
+def create_other_tables_encounter(cn: Conn):
+    cursor = cn.cursor
+    pass
+
+def create_other_tables_game(cn: Conn):
+    cursor = cn.cursor
+    pass
 
 if __name__ == "__main__":
     # create db
     cn = Conn()
     cn.cursor.execute(f"DROP DATABASE {POKEMON_DB_NAME}") # FIXME dangerous
+    info("[-------------------- create db --------------------]")
     create_db(cn)
+    info("[-------------------- create basic tables --------------------]")
     create_basic_tables(cn)
-
+    info("[-------------------- create other tables --------------------]")
+    create_other_tables(cn)
