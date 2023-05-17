@@ -206,7 +206,7 @@ def create_basic_tables(cn: Conn):
         cursor, "game",
         ["id", "name", "game_group_id"],
         ["SMALLINT", "CHAR(60)", "SMALLINT"],
-        False, None, ["id"], None)
+        False, None, ["id"], {"game_group_id": "game_group(id)"})
 
     # encounter NOTE: after creating pokemon, area and game tables
     info("[*] creating table 'encounter'...")
@@ -438,7 +438,7 @@ def create_other_tables_ability(cn: Conn):
         cursor, "ability_flavor_text",
         ["ability_id", "language_code", "text", "game_group_id"],
         ["SMALLINT", "CHAR(60)", "TEXT", "SMALLINT"],
-        False, None, ["ability_id", "language_code"], {"ability_id": "ability(id)"})
+        False, None, ["ability_id", "language_code"], {"ability_id": "ability(id)", "game_group_id": "game_group(id)"})
 
 def create_other_tables_type(cn: Conn):
     cursor = cn.cursor
@@ -476,7 +476,7 @@ def create_other_tables_item(cn: Conn):
         cursor, "item_flavor_text",
         ["item_id", "language_code", "game_group_id", "text"],
         ["SMALLINT", "CHAR(60)", "SMALLINT", "TEXT"],
-        False, None, ["item_id", "language_code"], {"item_id": "item(id)"})
+        False, None, ["item_id", "language_code"], {"item_id": "item(id)", "game_group_id": "game_group(id)"})
     
     # item_game_indices
     info("[*] creating table 'item_game_indices'...")
@@ -484,7 +484,7 @@ def create_other_tables_item(cn: Conn):
         cursor, "item_game_indices",
         ["item_id", "game_id"],
         ["SMALLINT", "SMALLINT"],
-        False, None, ["item_id", "game_id"], {"item_id": "item(id)"})
+        False, None, ["item_id", "game_id"], {"item_id": "item(id)", "game_id": "game(id)"})
     
     # item_names
     info("[*] creating table 'item_names'...")
