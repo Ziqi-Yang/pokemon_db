@@ -23,22 +23,24 @@ I want you to help me convert tables like this into this python code form (note:
 ```python
 ## pokemon
 ### pokemon_types
-create_table(cursor, "pokemon_types",
-		["pokemon_id", "type_id"], # COLUMN_NAME
-		["SMALLINT", "SMALLINT"], # DATA_TYPE
-		[False, False], # IS_NULLABLE
-		[None, None], # COLUMN_DEFAUL
-		["pokemon_id", "type_id"], # COLUMN_NAMEs that the corresponding COLUMN_KEY is 'primary'
-		["pokemon(id)", "type(id)"]) # REFERENCE, None means it is not a foreign key
+create_table(
+	cursor, "pokemon_types",
+	["pokemon_id", "ability_id", "is_hidden"],
+	["SMALLINT", "SMALLINT", "BOOLEAN"], 
+	[False, False, False],
+	[None, None, None],
+	["pokemon_id", "ability_id"],
+	["pokemon(id)", "ability(id)", None])
 
 ### pokemon_types
-create_table(cursor, "pokemon_types",
-		["pokemon_id", "ability_id", "is_hidden"],
-		["SMALLINT", "SMALLINT", "BOOLEAN"], 
-		[False, False, False],
-		[None, None, None],
-		["pokemon_id", "ability_id"],
-		["pokemon(id)", "ability(id)", None])
+create_table(
+	cursor, "pokemon_types",
+	["pokemon_id", "ability_id", "is_hidden"],
+	["SMALLINT", "SMALLINT", "BOOLEAN"], 
+	[False, False, False],
+	[None, None, None],
+	["pokemon_id", "ability_id"],
+	["pokemon(id)", "ability(id)", None])
 ```
 
 Note that the any comments that are in the same line with the code in the above example shouldn't be included in your answer.  
