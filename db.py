@@ -275,7 +275,7 @@ def create_other_tables_pokemon(cn: Conn):
         cursor, "pokemon_forms",
         ["pokemon_id", "name"],
         ["SMALLINT", "CHAR(60)"],
-        False, None, ["pokemon_id", "name"], None)
+        False, None, ["pokemon_id", "name"], {"pokemon_id": "pokemon(id)"})
     
     # pokemon_game_indices
     info("[*] creating table 'pokemon_game_indices'...")
@@ -376,7 +376,7 @@ def create_other_tables_move(cn: Conn):
         cursor, "move_effects",
         ["move_id", "language_code", "effect", "short_effect"],
         ["SMALLINT", "CHAR(60)", "TEXT", "TINYTEXT"],
-        False, None, ["move_id", "language_code"], {"move_id": "move(id)"})
+        [False, False, False, True], None, ["move_id", "language_code"], {"move_id": "move(id)"})
     
     # move_names
     info("[*] creating table 'move_names'...")
@@ -392,7 +392,7 @@ def create_other_tables_move(cn: Conn):
         cursor, "move_flavor_text",
         ["move_id", "language_code", "text", "game_group_id"],
         ["SMALLINT", "CHAR(60)", "TEXT", "SMALLINT"],
-        False, None, ["move_id", "language_code"], {"move_id": "move(id)"})
+        False, None, ["move_id", "language_code"], {"move_id": "move(id)", "game_group_id": "game_group(id)"})
 
 def create_other_tables_move_damage_class(cn: Conn):
     cursor = cn.cursor
@@ -430,7 +430,7 @@ def create_other_tables_ability(cn: Conn):
         cursor, "ability_effects",
         ["ability_id", "language_code", "effect", "short_effect"],
         ["SMALLINT", "CHAR(60)", "TEXT", "TINYTEXT"],
-        False, None, ["ability_id", "language_code"], {"ability_id": "ability(id)"})
+        [False, False, False, True], None, ["ability_id", "language_code"], {"ability_id": "ability(id)"})
     
     # ability_flavor_text
     info("[*] creating table 'ability_flavor_text'...")
