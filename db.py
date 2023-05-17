@@ -365,39 +365,209 @@ def create_other_tables_egg_group(cn: Conn):
         cursor, "egg_group_names",
         ["egg_group_id", "language_code", "name"],
         ["SMALLINT", "CHAR(60)", "CHAR(60)"],
-        False, None, ["id"], None)
+        False, None, ["egg_group_id", "language_code"], {"egg_group_id": "egg_group(id)"})
 
 def create_other_tables_move(cn: Conn):
     cursor = cn.cursor
-    pass
+
+    # move_effects
+    info("[*] creating table 'move_effects'...")
+    create_table(
+        cursor, "move_effects",
+        ["move_id", "language_code", "effect", "short_effect"],
+        ["SMALLINT", "CHAR(60)", "TEXT", "TINYTEXT"],
+        False, None, ["move_id", "language_code"], {"move_id": "move(id)"})
+    
+    # move_names
+    info("[*] creating table 'move_names'...")
+    create_table(
+        cursor, "move_names",
+        ["move_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["move_id", "language_code"], {"move_id": "move(id)"})
+    
+    # move_flavor_text
+    info("[*] creating table 'move_flavor_text'...")
+    create_table(
+        cursor, "move_flavor_text",
+        ["move_id", "language_code", "text", "game_group_id"],
+        ["SMALLINT", "CHAR(60)", "TEXT", "SMALLINT"],
+        False, None, ["move_id", "language_code"], {"move_id": "move(id)"})
 
 def create_other_tables_move_damage_class(cn: Conn):
     cursor = cn.cursor
-    pass
+
+    # move_damage_class_names
+    info("[*] creating table 'move_damage_class_names'...")
+    create_table(
+        cursor, "move_damage_class_names",
+        ["class_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["class_id", "language_code"], {"class_id": "move_damage_class(id)"})
+    
+    # move_damage_class_descriptions
+    info("[*] creating table 'move_damage_class_descriptions'...")
+    create_table(
+        cursor, "move_damage_class_descriptions",
+        ["class_id", "language_code", "description"],
+        ["SMALLINT", "CHAR(60)", "TEXT"],
+        False, None, ["class_id", "language_code"], {"class_id": "move_damage_class(id)"})
 
 def create_other_tables_ability(cn: Conn):
     cursor = cn.cursor
-    pass
+
+    # ability_names
+    info("[*] creating table 'ability_names'...")
+    create_table(
+        cursor, "ability_names",
+        ["ability_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["ability_id", "language_code"], {"ability_id": "ability(id)"})
+    
+    # ability_effects
+    info("[*] creating table 'ability_effects'...")
+    create_table(
+        cursor, "ability_effects",
+        ["ability_id", "language_code", "effect", "short_effect"],
+        ["SMALLINT", "CHAR(60)", "TEXT", "TINYTEXT"],
+        False, None, ["ability_id", "language_code"], {"ability_id": "ability(id)"})
+    
+    # ability_flavor_text
+    info("[*] creating table 'ability_flavor_text'...")
+    create_table(
+        cursor, "ability_flavor_text",
+        ["ability_id", "language_code", "text", "game_group_id"],
+        ["SMALLINT", "CHAR(60)", "TEXT", "SMALLINT"],
+        False, None, ["ability_id", "language_code"], {"ability_id": "ability(id)"})
 
 def create_other_tables_type(cn: Conn):
     cursor = cn.cursor
-    pass
+
+    # type_relation
+    info("[*] creating table 'type_relation'...")
+    create_table(
+        cursor, "type_relation",
+        ["from_id", "to_id", "damage"],
+        ["SMALLINT", "SMALLINT", "ENUM('no', 'half', 'normal', 'double')"],
+        False, None, ["from_id", "to_id"], {"from_id": "type(id)", "to_id": "type(id)"})
+    
+    # type_names
+    info("[*] creating table 'type_names'...")
+    create_table(
+        cursor, "type_names",
+        ["type_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["type_id", "language_code"], {"type_id": "type(id)"})
 
 def create_other_tables_item(cn: Conn):
     cursor = cn.cursor
-    pass
+
+    # item_effects
+    info("[*] creating table 'item_effects'...")
+    create_table(
+        cursor, "item_effects",
+        ["item_id", "language_code", "effect", "short_effect"],
+        ["SMALLINT", "CHAR(60)", "TEXT", "TINYTEXT"],
+        [False, False, False, True], None, ["item_id", "language_code"], {"item_id": "item(id)"})
+    
+    # item_flavor_text
+    info("[*] creating table 'item_flavor_text'...")
+    create_table(
+        cursor, "item_flavor_text",
+        ["item_id", "language_code", "game_group_id", "text"],
+        ["SMALLINT", "CHAR(60)", "SMALLINT", "TEXT"],
+        False, None, ["item_id", "language_code"], {"item_id": "item(id)"})
+    
+    # item_game_indices
+    info("[*] creating table 'item_game_indices'...")
+    create_table(
+        cursor, "item_game_indices",
+        ["item_id", "game_id"],
+        ["SMALLINT", "SMALLINT"],
+        False, None, ["item_id", "game_id"], {"item_id": "item(id)"})
+    
+    # item_names
+    info("[*] creating table 'item_names'...")
+    create_table(
+        cursor, "item_names",
+        ["item_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["item_id", "language_code"], {"item_id": "item(id)"})
 
 def create_other_tables_location(cn: Conn):
     cursor = cn.cursor
-    pass
+
+    # region_names
+    info("[*] creating table 'region_names'...")
+    create_table(
+        cursor, "region_names",
+        ["region_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["region_id", "language_code"], {"region_id": "region(id)"})
+    
+    # location_names
+    info("[*] creating table 'location_names'...")
+    create_table(
+        cursor, "location_names",
+        ["location_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["location_id", "language_code"], {"location_id": "location(id)"})
+    
+    # area_names
+    info("[*] creating table 'area_names'...")
+    create_table(
+        cursor, "area_names",
+        ["area_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["area_id", "language_code"], {"area_id": "area(id)"})
 
 def create_other_tables_encounter(cn: Conn):
     cursor = cn.cursor
-    pass
+    
+    # encounter_detail
+    info("[*] creating table 'encounter_detail'...")
+    create_table(
+        cursor, "encounter_detail",
+        ["encounter_id", "encounter_method_id", "encounter_condition_id", "max_level", "chance"],
+        ["SMALLINT", "SMALLINT", "SMALLINT", "TINYINT", "TINYINT"],
+        False, None, ["encounter_id", "encounter_method_id", "encounter_condition_id"],
+        {"encounter_id": "encounter(id)", "encounter_method_id": "encounter_method(id)",
+         "encounter_condition_id": "encounter_condition(id)"})
+    
+    # encounter_method_names
+    info("[*] creating table 'encounter_method_names'...")
+    create_table(
+        cursor, "encounter_method_names",
+        ["encounter_method_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(255)"],
+        False, None, ["encounter_method_id", "language_code"],  {"encounter_method_id": "encounter_method(id)"})
+    
+    # encounter_condition_names
+    info("[*] creating table 'encounter_condition_names'...")
+    create_table(
+        cursor, "encounter_condition_names",
+        ["encounter_condition_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(255)"],
+        False, None, ["encounter_condition_id", "language_code"], {"encounter_condition_id": "encounter_condition(id)"})
 
 def create_other_tables_game(cn: Conn):
     cursor = cn.cursor
-    pass
+
+    # game_group_names
+    info("[*] creating table 'game_group_names'...")
+    create_table(
+        cursor, "game_group_names",
+        ["game_group_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["game_group_id", "language_code"], {"game_group_id": "game_group(id)"})
+    
+    # game_names
+    info("[*] creating table 'game_names'...")
+    create_table(
+        cursor, "game_names",
+        ["game_id", "language_code", "name"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["game_id", "language_code"], {"game_id": "game(id)"})
 
 if __name__ == "__main__":
     # create db
