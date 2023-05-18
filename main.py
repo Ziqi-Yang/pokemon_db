@@ -5,8 +5,12 @@ import asyncio
 import aiopoke
 from aiopoke import AiopokeClient
 from json import loads as json
-from urllib.parse import urljoin
-from db import Conn, drop_db, create_db, create_tables, insert_into_table
+from urllib.parse import urlparse, urljoin
+from db import Conn, drop_db, create_db, create_tables, insert_into_table, query_data_existence
+import logging
+from logging import info 
+
+logging.getLogger().setLevel(logging.INFO)
 
 INFINITY = 1000000
 API_BASE = "https://pokeapi.co/api/v2/"
@@ -27,20 +31,67 @@ ALL_GAME_GROUPS_URL = urljoin(API_BASE, f"version-group?limit={INFINITY}")
 
 cn = Conn()
 
-def fetch_resources(url: str) -> list[str]:
+def get_id(url: str):
+    id_str = urlparse(url).path.rstrip('/').split('/')[-1]
+    return int(id_str)
+
+def fetch_resources(url: str) -> list[int]:
     resp = requests.get(url)
     resp.raise_for_status()
     res = json(resp.content)["results"]
-    return [v["name"] for v in res]
+    return [get_id(v["url"]) for v in res]
 
 async def fw_all_stats(client: AiopokeClient):
-    # res = fetch_resources(ALL_STATS_URL)
-    await fw_stat(client, "hp")
+    res = fetch_resources(ALL_STATS_URL)
+    info("[*] fetch and write all STATS")
+    await asyncio.gather(*(fw_stat(client, id) for id in res))
     
 
-async def fw_stat(client: AiopokeClient, stat_name: str):
-    stat = await client.get_stat(stat_name)
+async def fw_stat(client: AiopokeClient, id: int):
+    if query_data_existence(cn, "stat", f"id={id}"):
+        print(f"- stat {id} already exists")
+        return
+    stat = await client.get_stat(id)
     insert_into_table(cn, "stat", stat.id, stat.name, stat.is_battle_only)
+    for n in stat.names:
+        insert_into_table(cn, "stat_names", stat.id, n.language.name, n.name)
+    print(f"+ FW {id} done")
+
+async def fw_all_species(client: AiopokeClient):
+    res = fetch_resources(ALL_SPECIES_URL)
+    info("[*] fetch and write all SPECIES")
+    await asyncio.gather(*(fw_species(client, id) for id in res))
+
+async def fw_species(client: AiopokeClient, id: int):
+    if query_data_existence(cn, "stat", f"id={id}"):
+        print(f"- species {id} already exists")
+        return
+    species = await client.get_pokemon_species(id)
+    insert_into_table(cn, "species", species.id, species.name, species.order, species.gender_rate,
+                      species.capture_rate, species.base_happiness, species.is_baby, species.is_legendary,
+                      species.is_mythical, species.hatch_counter, species.has_gender_differences,
+                      species.forms_switchable, species.growth_rate.name, species.generation.name)
+    for n in species.names:
+        insert_into_table(cn, "species_names", species.id, n.language.name, n.name)
+    # TODO 
+    # for e in species.egg_groups:
+    #     insert_into_table(cn, "species_egg_group", species.id, e., n.name)
+    print(f"+ FW {id} done")
+
+async def fw_all_egg_groups(client: AiopokeClient):
+    res = fetch_resources(ALL_EGG_GROUPS_URL)
+    info("[*] fetch and write all EGG GROUPS")
+    await asyncio.gather(*(fw_egg_group(client, id) for id in res))
+
+async def fw_egg_group(client: AiopokeClient, id: int):
+    if query_data_existence(cn, "stat", f"id={id}"):
+        print(f"- egg_group {id} already exists")
+        return
+    egg_group = await client.get_egg_group(id)
+    insert_into_table(cn, "egg_group", egg_group.id, egg_group.name)
+    for n in egg_group.names:
+        insert_into_table(cn, "egg_group_names", egg_group.id, n.language.name, n.name)
+    print(f"+ FW {id} done")
 
 async def fw_pokemon(client: AiopokeClient, pokemon_name: str) -> bool:
     """fetch and store pokemon information into mysql database"""
@@ -51,13 +102,19 @@ async def fw_pokemon(client: AiopokeClient, pokemon_name: str) -> bool:
 async def main():
     # await fw_all_stats()
     client = aiopoke.AiopokeClient()
-    await fw_all_stats(client)
+    
+    # await fw_all_stats(client)
+    # await fw_all_species(client)
+    await fw_all_egg_groups(client)
+
     res = await asyncio.gather(*())
     await client.close()
     return res
 
 if __name__ == "__main__":
+    drop_db(cn)
     create_db(cn)
     create_tables(cn)
 
+    info("[-------------------- fetch and write datas --------------------]")
     res = asyncio.run(main())

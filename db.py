@@ -134,7 +134,8 @@ def create_basic_tables(cn: Conn):
          "growth_rate", "generation"],
         ["SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "BOOLEAN", "BOOLEAN",
          "BOOLEAN", "MEDIUMINT", "BOOLEAN", "BOOLEAN", "ENUM('slow', 'medium', 'fast', 'medium-slow', 'slow-then-very-fast', 'fast-then-very-slow')", "CHAR(60)"],
-        False, None, ["id"], None)
+        [False, False, False, False, False, True, False, False, False, True, False, False, False, False]
+        , None, ["id"], None)
 
     # egg_group
     info("[*] creating table 'egg_group'...")
@@ -587,6 +588,7 @@ def create_other_tables_game(cn: Conn):
         False, None, ["game_id", "language_code"], {"game_id": "game(id)"})
 
 def insert_into_table(cn: Conn, tableName: str, *values):
+    """NOTE that if a record already exists, the later insertations won't update the record. It just simply passes"""
     cursor = cn.cursor
     values_placeholder = ", ".join(["%s"] * len(values))
     command = f"""INSERT INTO {tableName} VALUES ({values_placeholder});"""
@@ -597,8 +599,16 @@ def insert_into_table(cn: Conn, tableName: str, *values):
         if err.errno == errorcode.ER_DUP_ENTRY:
             pass
         else:
+            print(f"{tableName}: {values}")
             print(err)
             exit(1)
+
+def query_data_existence(cn: Conn, tableName: str, condition) -> bool:
+    cursor = cn.cursor
+    command = f"SELECT COUNT(*) FROM {tableName} WHERE {condition}"
+    cursor.execute(command)
+    res = cursor.fetchone()
+    return res[0] > 0
 
 if __name__ == "__main__":
     # create db
@@ -610,3 +620,6 @@ if __name__ == "__main__":
 
     insert_into_table(cn, "stat", 2, "zarkli", True)
     insert_into_table(cn, "stat", 2, "zarkli", True)
+
+    print(query_data_existence(cn, "stat", "id=2"))
+    
