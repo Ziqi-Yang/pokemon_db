@@ -86,7 +86,14 @@ def create_table(cursor: MySQLCursor, table_name: str,
 {format_columns(column_names, data_types, data_nullable, data_default)}
 {formated_foreign_keys}{formated_primary_keys}
 );"""
-    cursor.execute(command)
+    try: 
+        cursor.execute(command)
+    except connector.Error as err:
+        if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
+            pass
+        else:
+            print(err)
+            exit(1)
 
 def create_tables(cn: Conn):
     """Create all tables"""
@@ -583,15 +590,23 @@ def insert_into_table(cn: Conn, tableName: str, values: list):
     cursor = cn.cursor
     values_placeholder = ", ".join(["%s"] * len(values))
     command = f"""INSERT INTO {tableName} VALUES ({values_placeholder});"""
-    cursor.execute(command, values)
-    cn.conn.commit()
+    try: 
+        cursor.execute(command, values)
+        cn.conn.commit()
+    except connector.Error as err:
+        if err.errno == errorcode.ER_DUP_ENTRY:
+            pass
+        else:
+            print(err)
+            exit(1)
 
 if __name__ == "__main__":
     # create db
     cn = Conn()
 
-    drop_db(cn) # FIXME dangerous
+    # drop_db(cn) # FIXME dangerous
     create_db(cn)
     create_tables(cn)
 
+    insert_into_table(cn, "stat", [2, "zarkli", True])
     insert_into_table(cn, "stat", [2, "zarkli", True])
