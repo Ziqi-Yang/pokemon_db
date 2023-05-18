@@ -23,6 +23,7 @@ class Conn:
 
 def create_db(cn: Conn):
     """Create db and return cursor to that db"""
+    info("[-------------------- create db --------------------]")
     cursor = cn.cursor
 
     # create database
@@ -38,6 +39,9 @@ def create_db(cn: Conn):
     # use database
     cursor.execute(f"USE {POKEMON_DB_NAME};")
     info(f"use database {POKEMON_DB_NAME}")
+
+def drop_db(cn: Conn):
+    cn.cursor.execute(f"DROP DATABASE {POKEMON_DB_NAME}")
 
 def create_table(cursor: MySQLCursor, table_name: str,
                  column_names: list[str],
@@ -84,8 +88,14 @@ def create_table(cursor: MySQLCursor, table_name: str,
 );"""
     cursor.execute(command)
 
+def create_tables(cn: Conn):
+    """Create all tables"""
+    create_basic_tables(cn)
+    create_other_tables(cn)
+
 def create_basic_tables(cn: Conn):
     """Create a couple of tables that will be refered in the other tables."""
+    info("[-------------------- create basic tables --------------------]")
     cursor = cn.cursor
 
     # pokemon
@@ -235,6 +245,7 @@ def create_basic_tables(cn: Conn):
         False, None, ["id"], None)
 
 def create_other_tables(cn: Conn):
+    info("[-------------------- create other tables --------------------]")
     create_other_tables_pokemon(cn)
     create_other_tables_stat(cn)
     create_other_tables_species(cn)
@@ -247,7 +258,6 @@ def create_other_tables(cn: Conn):
     create_other_tables_location(cn)
     create_other_tables_encounter(cn)
     create_other_tables_game(cn)
-
 
 def create_other_tables_pokemon(cn: Conn):
     """Create other tables."""
@@ -569,13 +579,19 @@ def create_other_tables_game(cn: Conn):
         ["SMALLINT", "CHAR(60)", "CHAR(60)"],
         False, None, ["game_id", "language_code"], {"game_id": "game(id)"})
 
+def insert_into_table(cn: Conn, tableName: str, values: list):
+    cursor = cn.cursor
+    values_placeholder = ", ".join(["%s"] * len(values))
+    command = f"""INSERT INTO {tableName} VALUES ({values_placeholder});"""
+    cursor.execute(command, values)
+    cn.conn.commit()
+
 if __name__ == "__main__":
     # create db
     cn = Conn()
-    cn.cursor.execute(f"DROP DATABASE {POKEMON_DB_NAME}") # FIXME dangerous
-    info("[-------------------- create db --------------------]")
+
+    drop_db(cn) # FIXME dangerous
     create_db(cn)
-    info("[-------------------- create basic tables --------------------]")
-    create_basic_tables(cn)
-    info("[-------------------- create other tables --------------------]")
-    create_other_tables(cn)
+    create_tables(cn)
+
+    insert_into_table(cn, "stat", [2, "zarkli", True])
