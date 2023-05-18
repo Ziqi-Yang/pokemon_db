@@ -182,7 +182,7 @@ def create_basic_tables(cn: Conn):
         cursor, "item",
         ["id", "name", "cost", "category", "default_sprite", "fling_power"],
         ["SMALLINT", "CHAR(60)", "INT", "CHAR(60)", "CHAR(255)", "SMALLINT"],
-        [False, False, False, False, True, False],
+        [False, False, False, False, True, True],
         None,  ["id"], None)
 
     # table 'region'
@@ -499,9 +499,9 @@ def create_other_tables_item(cn: Conn):
     info("[*] creating table 'item_game_indices'...")
     create_table(
         cursor, "item_game_indices",
-        ["item_id", "game_id"],
-        ["SMALLINT", "SMALLINT"],
-        False, None, ["item_id", "game_id"], {"item_id": "item(id)", "game_id": "game(id)"})
+        ["item_id", "generation", "game_index"],
+        ["SMALLINT", "CHAR(60)", "SMALLINT"],
+        False, None, ["item_id", "generation"], {"item_id": "item(id)"})
     
     # item_names
     info("[*] creating table 'item_names'...")

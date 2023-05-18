@@ -31,7 +31,7 @@ ALL_GAMES_URL = urljoin(API_BASE, f"version?limit={INFINITY}")
 ALL_GAME_GROUPS_URL = urljoin(API_BASE, f"version-group?limit={INFINITY}")
 
 cn = Conn()
-errorList = []
+errorSet = set()
 type_damage_relationship = dict()
 
 def get_id(url: str):
@@ -90,6 +90,12 @@ async def fw_all_types(client: AiopokeClient):
         fw_type_18() # NOTE: we should do this manually due to a bug(maybe) in aiopokeapi 
     fw_type_relations([v for v in res if v[0] < 10000])
 
+async def fw_all_items(client: AiopokeClient):
+    res = fetch_resources(ALL_ITEMS_URL)
+    info("[*] fetch and write all items")
+    await asyncio.gather(*(fw_item(client, id_name) for id_name in res))
+    await fw_missing_items()
+
 async def fw_stat(client: AiopokeClient, id_name: tuple):
     id = id_name[0]
     name = id_name[1]
@@ -102,7 +108,7 @@ async def fw_stat(client: AiopokeClient, id_name: tuple):
         try:
             stat = await client.get_stat(name)
         except:
-            errorList.append(f"stat {id}")
+            errorSet.add(f"stat {id}")
             return
         
     # stat
@@ -124,7 +130,7 @@ async def fw_species(client: AiopokeClient, id_name: tuple):
         try:
             species = await client.get_pokemon_species(name)
         except:
-            errorList.append(f"species {id}")
+            errorSet.add(f"species {id}")
             return
 
     # species
@@ -152,7 +158,7 @@ async def fw_egg_group(client: AiopokeClient, id_name: tuple):
         try:
             egg_group = await client.get_egg_group(name)
         except:
-            errorList.append(f"egg_group {id}")
+            errorSet.add(f"egg_group {id}")
             return
     # egg_group
     insert_into_table(cn, "egg_group", egg_group.id, egg_group.name)
@@ -173,7 +179,7 @@ async def fw_move_damage_class(client: AiopokeClient, id_name: tuple):
         try:
             mdc = await client.get_move_damage_class(name)
         except:
-            errorList.append(f"move_damage_class {id}")
+            errorSet.add(f"move_damage_class {id}")
             return
     # move_damage_class
     insert_into_table(cn, "move_damage_class", mdc.id, mdc.name)
@@ -198,7 +204,7 @@ async def fw_ability(client: AiopokeClient, id_name: tuple):
         try:
             ab = await client.get_ability(name)
         except:
-            errorList.append(f"ability {id}")
+            errorSet.add(f"ability {id}")
             return
     if query_data_existence(cn, "ability", f"id={id}"):
         print(f"- ability {id} already exists")
@@ -229,7 +235,7 @@ async def fw_game_group(client: AiopokeClient, id_name: tuple):
         try:
             gp = await client.get_version_group(name)
         except:
-            errorList.append(f"game_group {id}")
+            errorSet.add(f"game_group {id}")
             return
 
     # game_group
@@ -248,7 +254,7 @@ async def fw_game(client: AiopokeClient, id_name: tuple):
         try:
             game = await client.get_version(name)
         except:
-            errorList.append(f"game {id}")
+            errorSet.add(f"game {id}")
             return
     # game
     insert_into_table(cn, "game", game.id, game.name, game.version_group.id)
@@ -271,7 +277,7 @@ async def fw_type(client: AiopokeClient, id_name: tuple):
         except:
             if id == 18:
                 return
-            errorList.append(f"type {id}")
+            errorSet.add(f"type {id}")
             return
     # type
     insert_into_table(cn, "type", type.id, type.name, type.generation.name)
@@ -305,6 +311,75 @@ def fw_type_relations(all_types: list):
             if not query_data_existence(cn, "type_relation", f"from_id={from_id} AND to_id={to_id}"):
                 insert_into_table(cn, "type_relation", from_id, to_id, "normal")
 
+async def fw_item(client: AiopokeClient, id_name: tuple):
+    id = id_name[0]
+    name = id_name[1]
+    if query_data_existence(cn, "item", f"id={id}"):
+        print(f"- item {id} already exists")
+        return
+    try:
+        item = await client.get_item(id)
+    except:
+        try:
+            item = await client.get_item(name)
+        except:
+            errorSet.add(f"item {id}")
+            return
+    # item
+    if item.sprite and item.sprite.default:
+        insert_into_table(cn, "item", item.id, item.name, item.cost, item.category.name, item.sprite.default.url, item.fling_power)
+    else:
+        insert_into_table(cn, "item", item.id, item.name, item.cost, item.category.name, None, item.fling_power)
+    # item_effects
+    for e in item.effect_entries:
+        insert_into_table(cn, "item_effects", item.id, e.language.name, e.effect, e.short_effect)
+    # item_flavor_text
+    for f in item.flavor_text_entries:
+        insert_into_table(cn, "item_flavor_text", item.id, f.language.name, f.version_group.id, f.text)
+    # item_game_indices
+    for g in item.game_indices:
+        insert_into_table(cn, "item_game_indices", item.id, g.generation.name, g.game_index)
+    # item_names
+    for n in item.names:
+        insert_into_table(cn, "item_names", item.id, n.language.name, n.name)
+    print(f"+ FW item {id} done")
+
+async def fw_missing_items():
+    info("fw missing items")
+    ids = []
+    for item in errorSet:
+        if item.startswith("item"):
+            id = int(item[5:])
+            ids.append(id)
+    
+    await asyncio.gather(*(fw_missing_item(id, urljoin(API_BASE, f"item/{id}/")) for id in ids))
+
+async def fw_missing_item(id: int, url: str):
+    resp = requests.get(url)
+    if not resp.ok:
+        print(f"- FW item {id} failed!!!")
+        return
+    item = json(resp.content)
+    # item
+    if "sprite" in item and item["sprite"] and "default" in item["sprite"]:
+        insert_into_table(cn, "item", item["id"], item["name"], item["cost"], item["category"]["name"], item["sprite"]["default"]["url"], item["fling_power"])
+    else:
+        insert_into_table(cn, "item", item["id"], item["name"], item["cost"], item["category"]["name"], None, item["fling_power"])
+    # item_effects
+    for e in item.effect_entries:
+        insert_into_table(cn, "item_effects", item["id"], e["language"]["name"], e["effect"], e["short_effect"])
+    # item_flavor_text
+    for f in item.flavor_text_entries:
+        insert_into_table(cn, "item_flavor_text", item["id"], f["language"]["name"], f["version_group"]["id"], f["text"])
+    # item_game_indices
+    for g in item.game_indices:
+        insert_into_table(cn, "item_game_indices", item["id"], g["generation"]["name"], g["game_index"])
+    # item_names
+    for n in item.names:
+        insert_into_table(cn, "item_names", item["id"], n["language"]["name"], n["name"])
+    print(f"+ FW item {id} done")
+    errorSet.remove(f"item {id}")
+
 
 async def main():
     # await fw_all_stats()
@@ -313,11 +388,12 @@ async def main():
     # await fw_all_stats(client)
     # await fw_all_species(client) # TODO 
     # await fw_all_egg_groups(client)
-    await fw_all_move_damage_classes(client)
-    # await fw_all_game_groups(client)
-    # await fw_all_games(client)
+    # await fw_all_move_damage_classes(client)
+    await fw_all_game_groups(client)
+    await fw_all_games(client)
     # await fw_all_abilities(client) # NOTE: after game_group
-    await fw_all_types(client) 
+    # await fw_all_types(client) 
+    await fw_all_items(client) 
 
     res = await asyncio.gather(*())
     await client.close()
@@ -340,7 +416,7 @@ async def main():
 #         try:
 #             XXXXX = await client.get_XXXXX(name)
 #         except:
-#             errorList.append(f"XXXXX {id}")
+#             errorSet.add(f"XXXXX {id}")
 #             return
 #     # XXXXX
 #     insert_into_table(cn, "XXXXX", XXXXX.id, XXXXX.name, XXXXX.is_battle_only)
@@ -350,12 +426,12 @@ async def main():
 #     print(f"+ FW XXXXX {id} done")
 
 if __name__ == "__main__":
-    drop_db(cn)
+    # drop_db(cn)
     create_db(cn)
     create_tables(cn)
 
     info("[-------------------- fetch and write datas --------------------]")
     res = asyncio.run(main())
-    if len(errorList):
+    if len(errorSet):
         print("[-------------------- Error List --------------------]")
-        print(errorList)
+        print(errorSet)
