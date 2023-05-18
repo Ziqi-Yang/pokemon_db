@@ -46,52 +46,97 @@ async def fw_all_stats(client: AiopokeClient):
     info("[*] fetch and write all STATS")
     await asyncio.gather(*(fw_stat(client, id) for id in res))
     
-
-async def fw_stat(client: AiopokeClient, id: int):
-    if query_data_existence(cn, "stat", f"id={id}"):
-        print(f"- stat {id} already exists")
-        return
-    stat = await client.get_stat(id)
-    insert_into_table(cn, "stat", stat.id, stat.name, stat.is_battle_only)
-    for n in stat.names:
-        insert_into_table(cn, "stat_names", stat.id, n.language.name, n.name)
-    print(f"+ FW {id} done")
+async def fw_all_egg_groups(client: AiopokeClient):
+    res = fetch_resources(ALL_EGG_GROUPS_URL)
+    info("[*] fetch and write all EGG GROUPS")
+    await asyncio.gather(*(fw_egg_group(client, id) for id in res))
 
 async def fw_all_species(client: AiopokeClient):
     res = fetch_resources(ALL_SPECIES_URL)
     info("[*] fetch and write all SPECIES")
     await asyncio.gather(*(fw_species(client, id) for id in res))
 
+async def fw_all_move_damage_classes(client: AiopokeClient):
+    res = fetch_resources(ALL_MOVE_DAMAGE_CLASSES_URL)
+    info("[*] fetch and write all MOVE_DAMAGE_CLASSES")
+    await asyncio.gather(*(fw_move_damage_class(client, id) for id in res))
+
+async def fw_all_ability(client: AiopokeClient):
+    res = fetch_resources(ALL_ABILITIES_URL)
+    info("[*] fetch and write all ABILITIES")
+    await asyncio.gather(*(fw_egg_group(client, id) for id in res))
+
+async def fw_stat(client: AiopokeClient, id: int):
+    if query_data_existence(cn, "stat", f"id={id}"):
+        print(f"- stat {id} already exists")
+        return
+    stat = await client.get_stat(id)
+    # stat
+    insert_into_table(cn, "stat", stat.id, stat.name, stat.is_battle_only)
+    # stat_names
+    for n in stat.names:
+        insert_into_table(cn, "stat_names", stat.id, n.language.name, n.name)
+    print(f"+ FW stat {id} done")
+
 async def fw_species(client: AiopokeClient, id: int):
     if query_data_existence(cn, "stat", f"id={id}"):
         print(f"- species {id} already exists")
         return
     species = await client.get_pokemon_species(id)
+    # species
     insert_into_table(cn, "species", species.id, species.name, species.order, species.gender_rate,
                       species.capture_rate, species.base_happiness, species.is_baby, species.is_legendary,
                       species.is_mythical, species.hatch_counter, species.has_gender_differences,
                       species.forms_switchable, species.growth_rate.name, species.generation.name)
+    # species_names
     for n in species.names:
         insert_into_table(cn, "species_names", species.id, n.language.name, n.name)
     # TODO 
     # for e in species.egg_groups:
     #     insert_into_table(cn, "species_egg_group", species.id, e., n.name)
-    print(f"+ FW {id} done")
-
-async def fw_all_egg_groups(client: AiopokeClient):
-    res = fetch_resources(ALL_EGG_GROUPS_URL)
-    info("[*] fetch and write all EGG GROUPS")
-    await asyncio.gather(*(fw_egg_group(client, id) for id in res))
+    print(f"+ FW species {id} done")
 
 async def fw_egg_group(client: AiopokeClient, id: int):
     if query_data_existence(cn, "stat", f"id={id}"):
         print(f"- egg_group {id} already exists")
         return
     egg_group = await client.get_egg_group(id)
+    # egg_group
     insert_into_table(cn, "egg_group", egg_group.id, egg_group.name)
+    # egg_group_names
     for n in egg_group.names:
         insert_into_table(cn, "egg_group_names", egg_group.id, n.language.name, n.name)
-    print(f"+ FW {id} done")
+    print(f"+ FW egg_group {id} done")
+
+async def fw_move_damage_class(client: AiopokeClient, id: int):
+    if query_data_existence(cn, "stat", f"id={id}"):
+        print(f"- move_damage_class {id} already exists")
+        return
+    mdc = await client.get_move_damage_class(id)
+    # move_damage_class
+    insert_into_table(cn, "move_damage_class", mdc.id, mdc.name)
+    # move_damage_class_names
+    for n in mdc.names:
+        insert_into_table(cn, "move_damage_class_names", mdc.id, n.language.name, n.name)
+    # move_damage_class_descriptions
+    for d in mdc.descriptions:
+        insert_into_table(cn, "move_damage_class_descriptions", mdc.id, d.language.name, d.description)
+    print(f"+ FW move_damage_class {id} done")
+
+async def fw_move_abilities(client: AiopokeClient, id: int):
+    # TODO 
+    if query_data_existence(cn, "stat", f"id={id}"):
+        print(f"- ability {id} already exists")
+        return
+    mdc = await client.get_egg_group(id)
+    # egg_group
+    insert_into_table(cn, "egg_group", mdc.id, mdc.name)
+    # egg_group_names
+    for n in mdc.names:
+        insert_into_table(cn, "move_damage_names", mdc.id, n.language.name, n.name)
+    print(f"+ FW ability {id} done")
+
+
 
 async def fw_pokemon(client: AiopokeClient, pokemon_name: str) -> bool:
     """fetch and store pokemon information into mysql database"""
@@ -104,8 +149,9 @@ async def main():
     client = aiopoke.AiopokeClient()
     
     # await fw_all_stats(client)
-    # await fw_all_species(client)
-    await fw_all_egg_groups(client)
+    # await fw_all_species(client) # TODO 
+    # await fw_all_egg_groups(client)
+    await fw_all_move_damage_classes(client)
 
     res = await asyncio.gather(*())
     await client.close()

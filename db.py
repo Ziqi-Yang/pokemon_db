@@ -149,8 +149,8 @@ def create_basic_tables(cn: Conn):
     info("[*] creating table 'move_damage_class'...")
     create_table(
         cursor, "move_damage_class",
-        ["id", "class_name", "description"],
-        ["SMALLINT", "CHAR(60)", "SMALLINT"],
+        ["id", "name"],
+        ["SMALLINT", "CHAR(60)"],
         False, None, ["id"], None)
     
     # ability
