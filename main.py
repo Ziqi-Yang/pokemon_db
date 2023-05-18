@@ -4,6 +4,7 @@ import requests
 import asyncio
 import aiopoke
 from aiopoke import AiopokeClient
+from aiopoke.objects.resources.pokemon.natural_gift_type import TypeRelations
 from json import loads as json
 from urllib.parse import urlparse, urljoin
 from db import Conn, drop_db, create_db, create_tables, insert_into_table, query_data_existence
@@ -31,6 +32,7 @@ ALL_GAME_GROUPS_URL = urljoin(API_BASE, f"version-group?limit={INFINITY}")
 
 cn = Conn()
 errorList = []
+type_damage_relationship = dict()
 
 def get_id(url: str):
     id_str = urlparse(url).path.rstrip('/').split('/')[-1]
@@ -78,6 +80,15 @@ async def fw_all_games(client: AiopokeClient):
     res = fetch_resources(ALL_GAMES_URL)
     info("[*] fetch and write all GAMES")
     await asyncio.gather(*(fw_game(client, id_name) for id_name in res))
+
+async def fw_all_types(client: AiopokeClient):
+    res = fetch_resources(ALL_TYPES_URL)
+    info("[*] fetch and write all TYPES")
+    # NOTE ignore type > 10000, it will brings us unfortunate
+    await asyncio.gather(*(fw_type(client, id_name) for id_name in res if id_name[0] < 10000))
+    if not query_data_existence(cn, "type", f"id=18"):
+        fw_type_18() # NOTE: we should do this manually due to a bug(maybe) in aiopokeapi 
+    fw_type_relations([v for v in res if v[0] < 10000])
 
 async def fw_stat(client: AiopokeClient, id_name: tuple):
     id = id_name[0]
@@ -246,29 +257,78 @@ async def fw_game(client: AiopokeClient, id_name: tuple):
         insert_into_table(cn, "game_names", game.id, n.language.name, n.name)
     print(f"+ FW game {id} done")
 
+async def fw_type(client: AiopokeClient, id_name: tuple):
+    id = id_name[0]
+    name = id_name[1]
+    if query_data_existence(cn, "type", f"id={id}"):
+        print(f"- type {id} already exists")
+        return
+    try:
+        type = await client.get_type(id)
+    except:
+        try:
+            type = await client.get_type(name)
+        except:
+            if id == 18:
+                return
+            errorList.append(f"type {id}")
+            return
+    # type
+    insert_into_table(cn, "type", type.id, type.name, type.generation.name)
+    # type_names
+    for n in type.names:
+        insert_into_table(cn, "type_names", type.id, n.language.name, n.name)
+    # store type damage relations 
+    type_damage_relationship[type.id] = type.damage_relations
+    print(f"+ FW type {id} done")
+
+def fw_type_18(): # TODO temporary solution
+    resp = requests.get("https://pokeapi.co/api/v2/type/18")
+    resp.raise_for_status()
+    type = json(resp.content)
+    insert_into_table(cn, "type", type["id"], type["name"], type["generation"]["name"])
+    for n in type["names"]:
+        insert_into_table(cn, "type_names", type["id"], n["language"]["name"], n["name"])
+    type_damage_relationship[18] = TypeRelations(**type["damage_relations"])
+    print("+ FW type 18 done")
+
+def fw_type_relations(all_types: list):
+    """NOTE: use after executing 'fw_type', complete missing normal part the type relationship table"""
+    for from_id,_ in all_types:
+        for t in type_damage_relationship[from_id].no_damage_to:
+            insert_into_table(cn, "type_relation", from_id, t.id, "no")
+        for t in type_damage_relationship[from_id].half_damage_to:
+            insert_into_table(cn, "type_relation", from_id, t.id, "half")
+        for t in type_damage_relationship[from_id].double_damage_to:
+            insert_into_table(cn, "type_relation", from_id, t.id, "double")
+        for to_id, _ in all_types:
+            if not query_data_existence(cn, "type_relation", f"from_id={from_id} AND to_id={to_id}"):
+                insert_into_table(cn, "type_relation", from_id, to_id, "normal")
+
 
 async def main():
     # await fw_all_stats()
     client = aiopoke.AiopokeClient()
     
-    await fw_all_stats(client)
+    # await fw_all_stats(client)
     # await fw_all_species(client) # TODO 
-    await fw_all_egg_groups(client)
+    # await fw_all_egg_groups(client)
     await fw_all_move_damage_classes(client)
-    await fw_all_game_groups(client)
-    await fw_all_games(client)
-    await fw_all_abilities(client) # NOTE: after game_group
+    # await fw_all_game_groups(client)
+    # await fw_all_games(client)
+    # await fw_all_abilities(client) # NOTE: after game_group
+    await fw_all_types(client) 
 
     res = await asyncio.gather(*())
     await client.close()
     return res
 
-# async def fw_all_PROTO(client: AiopokeClient):
+# async def fw_all_XXXXX(client: AiopokeClient):
 #     res = fetch_resources(XXXXX)
 #     info("[*] fetch and write all XXXXX")
 #     await asyncio.gather(*(fw_XXXXX(client, id_name) for id_name in res))
 
-# async def fw_XXXXX(client: AiopokeClient, id: int):
+# async def fw_XXXXX(client: AiopokeClient, id_name: tuple):
 #     id = id_name[0]
 #     name = id_name[1]
 #     if query_data_existence(cn, "XXXXX", f"id={id}"):
@@ -286,14 +346,16 @@ async def main():
 #     insert_into_table(cn, "XXXXX", XXXXX.id, XXXXX.name, XXXXX.is_battle_only)
 #     # XXXXX_names
 #     for n in XXXXX.names:
-#         insert_into_table(cn, "NOTE", XXXXX.id, n.language.name, n.name)
+#         insert_into_table(cn, "XXXXX_names", XXXXX.id, n.language.name, n.name)
 #     print(f"+ FW XXXXX {id} done")
 
 if __name__ == "__main__":
-    # drop_db(cn)
+    drop_db(cn)
     create_db(cn)
     create_tables(cn)
 
     info("[-------------------- fetch and write datas --------------------]")
     res = asyncio.run(main())
-    print(errorList)
+    if len(errorList):
+        print("[-------------------- Error List --------------------]")
+        print(errorList)

@@ -161,13 +161,12 @@ def create_basic_tables(cn: Conn):
         ["SMALLINT", "CHAR(60)", "CHAR(60)"],
         False, None, ["id"], None)
 
-    # type NOTE: after creating move_damage_class
     info("[*] creating table 'type'...")
     create_table(
         cursor, "type",
-        ["id", "name", "generation", "move_damage_class_id"],
-        ["SMALLINT", "CHAR(60)", "CHAR(60)", "SMALLINT"],
-        False, None, ["id"], {"move_damage_class_id": "move_damage_class(id)"})
+        ["id", "name", "generation"],
+        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
+        False, None, ["id"], None)
 
     # move NOTE: after creating type
     info("[*] creating table 'move'...")
