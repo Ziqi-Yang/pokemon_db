@@ -35,11 +35,15 @@ def get_id(url: str):
     id_str = urlparse(url).path.rstrip('/').split('/')[-1]
     return int(id_str)
 
-def fetch_resources(url: str) -> list[int]:
+def fetch_resources(url: str, use_name = False):
     resp = requests.get(url)
     resp.raise_for_status()
     res = json(resp.content)["results"]
-    return [get_id(v["url"]) for v in res]
+    if use_name:
+        res = [v["name"] for v in res]
+    else:
+        res = [get_id(v["url"]) for v in res]
+    return res
 
 async def fw_all_stats(client: AiopokeClient):
     res = fetch_resources(ALL_STATS_URL)
@@ -61,10 +65,20 @@ async def fw_all_move_damage_classes(client: AiopokeClient):
     info("[*] fetch and write all MOVE_DAMAGE_CLASSES")
     await asyncio.gather(*(fw_move_damage_class(client, id) for id in res))
 
-async def fw_all_ability(client: AiopokeClient):
+async def fw_all_abilities(client: AiopokeClient):
     res = fetch_resources(ALL_ABILITIES_URL)
     info("[*] fetch and write all ABILITIES")
-    await asyncio.gather(*(fw_egg_group(client, id) for id in res))
+    await asyncio.gather(*(fw_ability(client, id) for id in res))
+
+async def fw_all_game_groups(client: AiopokeClient):
+    res = fetch_resources(ALL_GAME_GROUPS_URL, use_name = True)
+    info("[*] fetch and write all GAME_GROUPS")
+    await asyncio.gather(*(fw_game_group(client, name) for name in res))
+
+async def fw_all_games(client: AiopokeClient):
+    res = fetch_resources(ALL_GAMES_URL, use_name = True)
+    info("[*] fetch and write all GAMES")
+    await asyncio.gather(*(fw_game(client, name) for name in res))
 
 async def fw_stat(client: AiopokeClient, id: int):
     if query_data_existence(cn, "stat", f"id={id}"):
@@ -123,19 +137,46 @@ async def fw_move_damage_class(client: AiopokeClient, id: int):
         insert_into_table(cn, "move_damage_class_descriptions", mdc.id, d.language.name, d.description)
     print(f"+ FW move_damage_class {id} done")
 
-async def fw_move_abilities(client: AiopokeClient, id: int):
+async def fw_ability(client: AiopokeClient, id: int):
+    """NOTE: after GAME_GROUP"""
     # TODO 
     if query_data_existence(cn, "stat", f"id={id}"):
         print(f"- ability {id} already exists")
         return
-    mdc = await client.get_egg_group(id)
-    # egg_group
-    insert_into_table(cn, "egg_group", mdc.id, mdc.name)
-    # egg_group_names
-    for n in mdc.names:
-        insert_into_table(cn, "move_damage_names", mdc.id, n.language.name, n.name)
+    ab = await client.get_ability(id)
+    # ability
+    insert_into_table(cn, "ability", ab.id, ab.name, ab.generation.name)
+    # ability_names
+    for n in ab.names:
+        insert_into_table(cn, "ability_names", ab.id, n.language.name, n.name)
+    # ability_effects
+    for e in ab.effect_entries:
+        insert_into_table(cn, "ability_effects", ab.id, e.language.name, e.effect, e.short_effect)
+    # ability_flavor_text
+    for t in ab.flavor_text_entries:
+        insert_into_table(cn, "ability_flavor_text", ab.id, t.language.name, t.flavor_text, t.version_group.id)
     print(f"+ FW ability {id} done")
 
+async def fw_game_group(client: AiopokeClient, name: str):
+    if query_data_existence(cn, "game_group", f"name='{name}'"):
+        print(f"- game_group {name} already exists")
+        return
+    gp = await client.get_version_group(name)
+    # game_group
+    insert_into_table(cn, "game_group", gp.id, gp.name, gp.generation.name)
+    print(f"+ FW game_group {name} done")
+
+async def fw_game(client: AiopokeClient, name: str):
+    if query_data_existence(cn, "game", f"name='{name}'"):
+        print(f"- game {name} already exists")
+        return
+    game = await client.get_version(name)
+    # game
+    insert_into_table(cn, "game", game.id, game.name, game.version_group.id)
+    # game_names
+    for n in game.names:
+        insert_into_table(cn, "game_names", game.id, n.language.name, n.name)
+    print(f"+ FW game {name} done")
 
 
 async def fw_pokemon(client: AiopokeClient, pokemon_name: str) -> bool:
@@ -151,11 +192,31 @@ async def main():
     # await fw_all_stats(client)
     # await fw_all_species(client) # TODO 
     # await fw_all_egg_groups(client)
-    await fw_all_move_damage_classes(client)
+    # await fw_all_move_damage_classes(client)
+    # await fw_all_abilities(client)
+    await fw_all_game_groups(client)
+    await fw_all_games(client)
 
     res = await asyncio.gather(*())
     await client.close()
     return res
+
+# async def fw_all_PROTO(client: AiopokeClient):
+#     res = fetch_resources(XXXXX)
+#     info("[*] fetch and write all XXXXX")
+#     await asyncio.gather(*(fw_XXXXX(client, id) for id in res))
+
+# async def fw_XXXXX(client: AiopokeClient, id: int):
+#     if query_data_existence(cn, "XXXXX", f"id={id}"):
+#         print(f"- XXXXX {id} already exists")
+#         return
+#     XXXXX = await client.get_XXXXX(id)
+#     # XXXXX
+#     insert_into_table(cn, "XXXXX", XXXXX.id, XXXXX.name, XXXXX.is_battle_only)
+#     # XXXXX_names
+#     for n in XXXXX.names:
+#         insert_into_table(cn, "NOTE", XXXXX.id, n.language.name, n.name)
+#     print(f"+ FW XXXXX {id} done")
 
 if __name__ == "__main__":
     drop_db(cn)

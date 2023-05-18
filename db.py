@@ -570,14 +570,6 @@ def create_other_tables_encounter(cn: Conn):
 
 def create_other_tables_game(cn: Conn):
     cursor = cn.cursor
-
-    # game_group_names
-    info("[*] creating table 'game_group_names'...")
-    create_table(
-        cursor, "game_group_names",
-        ["game_group_id", "language_code", "name"],
-        ["SMALLINT", "CHAR(60)", "CHAR(60)"],
-        False, None, ["game_group_id", "language_code"], {"game_group_id": "game_group(id)"})
     
     # game_names
     info("[*] creating table 'game_names'...")
