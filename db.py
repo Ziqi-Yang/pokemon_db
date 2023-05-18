@@ -586,7 +586,7 @@ def create_other_tables_game(cn: Conn):
         ["SMALLINT", "CHAR(60)", "CHAR(60)"],
         False, None, ["game_id", "language_code"], {"game_id": "game(id)"})
 
-def insert_into_table(cn: Conn, tableName: str, values: list):
+def insert_into_table(cn: Conn, tableName: str, *values):
     cursor = cn.cursor
     values_placeholder = ", ".join(["%s"] * len(values))
     command = f"""INSERT INTO {tableName} VALUES ({values_placeholder});"""
@@ -608,5 +608,5 @@ if __name__ == "__main__":
     create_db(cn)
     create_tables(cn)
 
-    insert_into_table(cn, "stat", [2, "zarkli", True])
-    insert_into_table(cn, "stat", [2, "zarkli", True])
+    insert_into_table(cn, "stat", 2, "zarkli", True)
+    insert_into_table(cn, "stat", 2, "zarkli", True)
