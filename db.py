@@ -105,26 +105,6 @@ def create_basic_tables(cn: Conn):
     info("[-------------------- create basic tables --------------------]")
     cursor = cn.cursor
 
-    # pokemon
-    info("[*] creating table 'pokemon'...")
-    create_table(
-        cursor, "pokemon",
-        ["id", "name", "the_order", "height", "weight", "base_experience", "sprite_front_default", 
-         "sprite_front_female", "sprite_front_shiny", "sprite_front_shiny_female", "sprite_back_default", 
-         "sprite_back_female", "sprite_back_shiny", "sprite_back_shiny_female"],
-        ["SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "CHAR(255)",
-         "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)"],
-        [False, False, False, False, False, False, True, True, True, True, True, True, True, True],
-        None, ["id"], None)
-
-    # stat
-    info("[*] creating table 'stat'...")
-    create_table(
-        cursor, "stat",
-        ["id", "name", "is_battle_only"],
-        ["SMALLINT", "CHAR(60)", "BOOLEAN"],
-        False, None, ["id"], None)
-
     # species
     info("[*] creating table 'species'...")
     create_table(
@@ -136,6 +116,26 @@ def create_basic_tables(cn: Conn):
          "BOOLEAN", "MEDIUMINT", "BOOLEAN", "BOOLEAN", "ENUM('slow', 'medium', 'fast', 'medium-slow', 'slow-then-very-fast', 'fast-then-very-slow')", "CHAR(60)"],
         [False, False, False, False, False, True, False, False, False, True, False, False, False, False]
         , None, ["id"], None)
+
+    # pokemon
+    info("[*] creating table 'pokemon'...")
+    create_table(
+        cursor, "pokemon",
+        ["id", "name", "the_order", "height", "weight", "base_experience", "sprite_front_default", 
+         "sprite_front_female", "sprite_front_shiny", "sprite_front_shiny_female", "sprite_back_default", 
+         "sprite_back_female", "sprite_back_shiny", "sprite_back_shiny_female", "species_id"],
+        ["SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "CHAR(255)",
+         "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "CHAR(255)", "SMALLINT"],
+        [False, True, True, True, True, True, True, True, True, True, True, True, True, True, False],
+        None, ["id"], {"species_id": "species(id)"})
+
+    # stat
+    info("[*] creating table 'stat'...")
+    create_table(
+        cursor, "stat",
+        ["id", "name", "is_battle_only"],
+        ["SMALLINT", "CHAR(60)", "BOOLEAN"],
+        False, None, ["id"], None)
 
     # egg_group
     info("[*] creating table 'egg_group'...")
@@ -172,9 +172,10 @@ def create_basic_tables(cn: Conn):
     info("[*] creating table 'move'...")
     create_table(
         cursor, "move",
-        ["id", "name", "power", "accuracy", "pp", "priority", "generation", "category", "type_id"],
-        ["SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "CHAR(60)", "CHAR(60)", "SMALLINT"],
-        False, None, ["id"], {"type_id": "type(id)"})
+        ["id", "name", "power", "accuracy", "pp", "priority", "generation", "type_id", "move_damage_class_id"],
+        ["SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "CHAR(60)", "SMALLINT", "SMALLINT"],
+        [False, False, True, True, True, True, False, False, False],
+        None, ["id"], {"type_id": "type(id)"})
 
     # item
     info("[*] creating table 'item'...")
@@ -199,7 +200,7 @@ def create_basic_tables(cn: Conn):
         cursor, "location",
         ["id", "name", "region_id"],
         ["SMALLINT", "CHAR(60)", "SMALLINT"],
-        False, None, ["id"], {"region_id": "region(id)"})
+        [False, False, True], None, ["id"], {"region_id": "region(id)"})
 
     # area
     info("[*] creating table 'area'...")
@@ -298,8 +299,8 @@ def create_other_tables_pokemon(cn: Conn):
     info("[*] creating table 'pokemon_game_indices'...")
     create_table(
         cursor, "pokemon_game_indices",
-        ["pokemon_id", "game_id"],
-        ["SMALLINT", "SMALLINT"],
+        ["pokemon_id", "game_id", "the_index"],
+        ["SMALLINT", "SMALLINT", "SMALLINT"],
         False, None, ["pokemon_id", "game_id"], {"pokemon_id": "pokemon(id)", "game_id": "game(id)"})
     
     # pokemon_held_items
@@ -361,9 +362,9 @@ def create_other_tables_species(cn: Conn):
     info("[*] creating table 'species_flavor_text'...")
     create_table(
         cursor, "species_flavor_text",
-        ["species_id", "language_code", "text", "game_group_id"],
+        ["species_id", "language_code", "text", "game_id"],
         ["SMALLINT", "CHAR(60)", "TEXT", "SMALLINT"],
-        False, None, ["species_id", "language_code"], {"species_id": "species(id)", "game_group_id": "game_group(id)"})
+        False, None, ["species_id", "language_code"], {"species_id": "species(id)", "game_id": "game(id)"})
     
     # species_form_descriptions
     info("[*] creating table 'species_form_descriptions'...")
@@ -607,10 +608,9 @@ if __name__ == "__main__":
 
     # drop_db(cn) # FIXME dangerous
     create_db(cn)
-    create_tables(cn)
+    # create_tables(cn)
 
-    insert_into_table(cn, "stat", 2, "zarkli", True)
-    insert_into_table(cn, "stat", 2, "zarkli", True)
+    # insert_into_table(cn, "stat", 2, "zarkli", True)
+    # insert_into_table(cn, "stat", 2, "zarkli", True)
 
-    print(query_data_existence(cn, "stat", "id=2"))
-    
+    # print(query_data_existence(cn, "stat", "id=2"))
