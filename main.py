@@ -29,10 +29,15 @@ ALL_LOCATIONS_URL = urljoin(API_BASE, f"location?limit={INFINITY}")
 ALL_AREAS_URL = urljoin(API_BASE, f"location-area?limit={INFINITY}")
 ALL_GAMES_URL = urljoin(API_BASE, f"version?limit={INFINITY}")
 ALL_GAME_GROUPS_URL = urljoin(API_BASE, f"version-group?limit={INFINITY}")
+ALL_ENCOUNTER_METHODS_URL = urljoin(API_BASE, f"encounter-method?limit={INFINITY}")
+ALL_ENCOUNTER_CONDITIONS_URL = urljoin(API_BASE, f"encounter-condition-value?limit={INFINITY}")
+# NOTE: ALL_ENCOUNTER_CONDITIONS_URL stands for ALL_ENCOUNTER_CONDITION_VALUES_URL
+# NOTE: enconters & encounter_details should be done when crawling pokemons
 
 cn = Conn()
 errorSet = set()
 type_damage_relationship = dict()
+encounter_id_counter = 1
 
 def get_id(url: str):
     id_str = urlparse(url).path.rstrip('/').split('/')[-1]
@@ -125,9 +130,20 @@ async def fw_all_moves(client: AiopokeClient):
     await fw_missing_moves()
 
 async def fw_all_pokemons(client: AiopokeClient):
+    """NOTE: this will also complete encounter & encounter_detail table"""
     res = fetch_resources(ALL_POKEMONS_URL)
     info("[*] fetch and write all pokemons")
     await asyncio.gather(*(fw_pokemon(client, id_name) for id_name in res))
+
+async def fw_all_encounter_methods(client: AiopokeClient):
+    res = fetch_resources(ALL_ENCOUNTER_METHODS_URL)
+    info("[*] fetch and write all encounter_methods")
+    await asyncio.gather(*(fw_encounter_method(client, id_name) for id_name in res))
+
+async def fw_all_encounter_conditions(client: AiopokeClient):
+    res = fetch_resources(ALL_ENCOUNTER_CONDITIONS_URL)
+    info("[*] fetch and write all encounter_conditions")
+    await asyncio.gather(*(fw_encounter_condition(client, id_name) for id_name in res))
 
 async def fw_stat(client: AiopokeClient, id_name: tuple):
     id = id_name[0]
@@ -609,9 +625,10 @@ async def fw_missing_move(id: int, url: str):
     errorSet.remove(f"move {id}")
 
 async def fw_pokemon(client: AiopokeClient, id_name: tuple):
+    global encounter_id_counter
     id = id_name[0]
     name = id_name[1]
-    if query_mul_table_id_existence(f"id={id}", "pokemon") and query_mul_table_id_existence(f"pokemon_id={id}", "pokemon_stats"):
+    if query_mul_table_id_existence(f"id={id}", "pokemon") and query_mul_table_id_existence(f"pokemon_id={id}", "encounter"):
         print(f"- pokemon {id} already exists")
         return
     try:
@@ -649,30 +666,84 @@ async def fw_pokemon(client: AiopokeClient, id_name: tuple):
     # pokemon_stats
     for s in pokemon.stats:
         insert_into_table(cn, "pokemon_stats", pokemon.id, s.stat.id, s.base_stat, s.effort)
-    print(f"+ FW pokemon {id} done")
+
+    # encounter & encounter details
+    for l in pokemon.location_area_encounters:
+        for g in l.version_details:
+            insert_into_table(cn, "encounter", encounter_id_counter, l.location_area.id, pokemon.id, g.version.id, g.max_chance)
+            for e in g.encounter_details:
+                for c in e.condition_values:
+                    insert_into_table(cn, "encounter_detail", encounter_id_counter, e.method.id, c.id, e.max_level, e.min_level, e.chance)
+                
+    print(f"+ FW pokemon {id} & encounter and encounter_detail {encounter_id_counter} done")
+    encounter_id_counter += 1
+
+
+async def fw_encounter_method(client: AiopokeClient, id_name: tuple):
+    id = id_name[0]
+    name = id_name[1]
+    if query_mul_table_id_existence(f"id={id}", "encounter_method"):
+        print(f"- encounter_method {id} already exists")
+        return
+    try:
+        encounter_method = await client.get_encounter_method(id)
+    except:
+        try:
+            encounter_method = await client.get_encounter_method(name)
+        except:
+            errorSet.add(f"encounter_method {id}")
+            return
+    # encounter_method
+    insert_into_table(cn, "encounter_method", encounter_method.id, encounter_method.name, encounter_method.order)
+    # encounter_method_names
+    for n in encounter_method.names:
+        insert_into_table(cn, "encounter_method_names", encounter_method.id, n.language.name, n.name)
+    print(f"+ FW encounter_method {id} done")
+
+async def fw_encounter_condition(client: AiopokeClient, id_name: tuple):
+    """NOTE: this function actually fw encounter_condition_values"""
+    id = id_name[0]
+    name = id_name[1]
+    if query_mul_table_id_existence(f"id={id}", "encounter_condition"):
+        print(f"- encounter_condition {id} already exists")
+        return
+    try:
+        encounter_condition = await client.get_encounter_condition_value(id)
+    except:
+        try:
+            encounter_condition = await client.get_encounter_condition_value(name)
+        except:
+            errorSet.add(f"encounter_condition {id}")
+            return
+    # encounter_condition
+    insert_into_table(cn, "encounter_condition", encounter_condition.id, encounter_condition.name)
+    # encounter_condition_names
+    for n in encounter_condition.names:
+        insert_into_table(cn, "encounter_condition_names", encounter_condition.id, n.language.name, n.name)
+    print(f"+ FW encounter_condition {id} done")
+    
 
 async def main():
     # await fw_all_stats()
     client = aiopoke.AiopokeClient()
     
-    # await fw_all_stats(client)
-    # await fw_all_game_groups(client)
-    # await fw_all_games(client)
-    # await fw_all_egg_groups(client)
-    # await fw_all_species(client) # NOTE after egg_group and game
-    # await fw_all_move_damage_classes(client)
-    # await fw_all_abilities(client) # NOTE: after game_group
-    # await fw_all_types(client) 
-    # await fw_all_items(client) 
-    # await fw_all_moves(client) # NOTE after type, move_damage_class and game_group
-    await fw_all_pokemons(client) # NOTE after species, type, ability, game, item, move, game_group and stat
+    await fw_all_regions(client) 
+    await fw_all_locations(client) 
+    await fw_all_areas(client) 
+    await fw_all_stats(client)
+    await fw_all_game_groups(client)
+    await fw_all_games(client)
+    await fw_all_egg_groups(client)
+    await fw_all_species(client) # NOTE after egg_group and game
+    await fw_all_move_damage_classes(client)
+    await fw_all_abilities(client) # NOTE: after game_group
+    await fw_all_types(client) 
+    await fw_all_items(client) 
+    await fw_all_moves(client) # NOTE after type, move_damage_class and game_group
+    await fw_all_encounter_methods(client) 
+    await fw_all_encounter_conditions(client) 
+    await fw_all_pokemons(client) # NOTE after all tables
 
-    # await fw_all_regions(client) 
-    # print(errorSet)
-    # await fw_all_locations(client) 
-    # print(errorSet)
-    # await fw_all_areas(client) 
-    # print(errorSet)
 
     res = await asyncio.gather(*())
     await client.close()
@@ -686,7 +757,7 @@ async def main():
 # async def fw_XXXXX(client: AiopokeClient, id_name: tuple):
 #     id = id_name[0]
 #     name = id_name[1]
-#     if query_data_existence(cn, "XXXXX", f"id={id}"):
+#     if query_mul_table_id_existence(f"id={id}", "XXXXX"):
 #         print(f"- XXXXX {id} already exists")
 #         return
 #     try:

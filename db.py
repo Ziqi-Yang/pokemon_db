@@ -231,7 +231,7 @@ def create_basic_tables(cn: Conn):
     create_table(
         cursor, "encounter",
         ["id", "area_id", "pokemon_id", "game_id", "max_chance"],
-        ["SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "TINYINT"],
+        ["SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT", "SMALLINT"],
         False, None,
         ["id", "area_id", "pokemon_id", "game_id"],
         {"area_id": "area(id)", "pokemon_id": "pokemon(id)", "game_id": "game(id)"})
@@ -546,8 +546,8 @@ def create_other_tables_encounter(cn: Conn):
     info("[*] creating table 'encounter_detail'...")
     create_table(
         cursor, "encounter_detail",
-        ["encounter_id", "encounter_method_id", "encounter_condition_id", "max_level", "chance"],
-        ["SMALLINT", "SMALLINT", "SMALLINT", "TINYINT", "TINYINT"],
+        ["encounter_id", "encounter_method_id", "encounter_condition_id", "max_level", "min_level", "chance"],
+        ["SMALLINT", "SMALLINT", "SMALLINT", "TINYINT", "TINYINT", "SMALLINT"],
         False, None, ["encounter_id", "encounter_method_id", "encounter_condition_id"],
         {"encounter_id": "encounter(id)", "encounter_method_id": "encounter_method(id)",
          "encounter_condition_id": "encounter_condition(id)"})
